@@ -5,7 +5,7 @@ import type {
   SupportWidgetScriptConfig,
 } from '@/lib/support-widget-scripts'
 import { usePathname } from 'next/navigation'
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   isSupportWidgetScriptEnabledOnPathname,
   parseSupportWidgetScriptTags,
@@ -18,6 +18,7 @@ interface SiteSupportWidgetScriptsProps {
 
 interface SupportWidgetWindow extends Window {
   __supportWidgetExecutedSnippets?: Set<string>
+  __supportWidgetHasExecutedScript?: boolean
 }
 
 function stripLocalePrefix(pathname: string | null, locale: string) {
@@ -104,6 +105,17 @@ function getSupportWidgetExecutionRegistry() {
   return supportWidgetWindow.__supportWidgetExecutedSnippets
 }
 
+function hasExecutedSupportWidgetScript() {
+  const supportWidgetWindow = window as SupportWidgetWindow
+
+  return supportWidgetWindow.__supportWidgetHasExecutedScript === true
+}
+
+function markSupportWidgetScriptExecuted() {
+  const supportWidgetWindow = window as SupportWidgetWindow
+  supportWidgetWindow.__supportWidgetHasExecutedScript = true
+}
+
 export default function SiteSupportWidgetScripts({ locale, scripts }: SiteSupportWidgetScriptsProps) {
   const pathname = usePathname()
   const localizedPathname = useMemo(() => stripLocalePrefix(pathname, locale), [locale, pathname])
@@ -116,10 +128,12 @@ export default function SiteSupportWidgetScripts({ locale, scripts }: SiteSuppor
     [activeScripts],
   )
   const previousActiveScriptSignatureRef = useRef<string | null>(null)
+  const [hasInteracted, setHasInteracted] = useState(false)
 
   useEffect(() => {
     const previousActiveScriptSignature = previousActiveScriptSignatureRef.current
     previousActiveScriptSignatureRef.current = activeScriptSignature
+    setHasInteracted(false)
 
     if (previousActiveScriptSignature === null) {
       return
@@ -129,15 +143,44 @@ export default function SiteSupportWidgetScripts({ locale, scripts }: SiteSuppor
       return
     }
 
+    if (!hasExecutedSupportWidgetScript()) {
+      return
+    }
+
     window.location.reload()
   }, [activeScriptSignature])
 
   useEffect(() => {
+    if (hasInteracted || activeScripts.length === 0) {
+      return
+    }
+
+    function handleInteraction() {
+      setHasInteracted(true)
+    }
+
+    window.addEventListener('pointerdown', handleInteraction, { once: true, passive: true })
+    window.addEventListener('keydown', handleInteraction, { once: true })
+    window.addEventListener('touchstart', handleInteraction, { once: true, passive: true })
+    window.addEventListener('scroll', handleInteraction, { once: true, passive: true })
+
+    return () => {
+      window.removeEventListener('pointerdown', handleInteraction)
+      window.removeEventListener('keydown', handleInteraction)
+      window.removeEventListener('touchstart', handleInteraction)
+      window.removeEventListener('scroll', handleInteraction)
+    }
+  }, [activeScripts.length, hasInteracted])
+
+  useEffect(() => {
+    if (!hasInteracted) {
+      return
+    }
+
     if (activeScripts.length === 0) {
       return
     }
 
-    // Third-party widgets are not reliably reversible, so treat each snippet as a one-time bootstrap.
     const executionRegistry = getSupportWidgetExecutionRegistry()
 
     for (const script of activeScripts) {
@@ -193,8 +236,9 @@ export default function SiteSupportWidgetScripts({ locale, scripts }: SiteSuppor
       }
 
       executionRegistry.add(executionKey)
+      markSupportWidgetScriptExecuted()
     }
-  }, [activeScripts])
+  }, [activeScripts, hasInteracted])
 
   return null
 }
