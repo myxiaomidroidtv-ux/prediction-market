@@ -730,22 +730,9 @@ export default function AdminGeneralSettingsForm({
           value="community-analytics"
           isOpen={openSections.includes('community-analytics')}
           onToggle={toggleSection}
-          header={<h3 className="text-base font-medium">{t('Community and analytics')}</h3>}
+          header={<h3 className="text-base font-medium">{t('Social & Community')}</h3>}
         >
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="grid gap-2">
-              <Label htmlFor="theme-google-analytics-id">{t('Google Analytics ID')}</Label>
-              <Input
-                id="theme-google-analytics-id"
-                name="google_analytics_id"
-                maxLength={120}
-                value={googleAnalyticsId}
-                onChange={event => setGoogleAnalyticsId(event.target.value)}
-                disabled={isPending}
-                placeholder={t('G-XXXXXXXXXX (optional)')}
-              />
-            </div>
-
             <div className="grid gap-2">
               <Label htmlFor="theme-discord-link">{t('Discord community link')}</Label>
               <Input
@@ -837,7 +824,7 @@ export default function AdminGeneralSettingsForm({
               />
             </div>
 
-            <div className="grid gap-2 md:col-span-2">
+            <div className="grid gap-2">
               <Label htmlFor="theme-support-link">{t('Support link')}</Label>
               <Input
                 id="theme-support-link"
@@ -849,17 +836,193 @@ export default function AdminGeneralSettingsForm({
                 placeholder={t('Discord, Telegram, WhatsApp link, or support email (optional)')}
               />
             </div>
+          </div>
+        </SettingsAccordionSection>
 
-            <div className="grid gap-3 md:col-span-2">
+        <SettingsAccordionSection
+          value="integrations"
+          isOpen={openSections.includes('integrations')}
+          onToggle={toggleSection}
+          header={<h3 className="text-base font-medium">{t('Integrations')}</h3>}
+        >
+          <div className="grid gap-6">
+            <div className="grid gap-2">
+              <Label htmlFor="theme-google-analytics-id">{t('Google Analytics ID')}</Label>
+              <Input
+                id="theme-google-analytics-id"
+                name="google_analytics_id"
+                maxLength={120}
+                value={googleAnalyticsId}
+                onChange={event => setGoogleAnalyticsId(event.target.value)}
+                disabled={isPending}
+                placeholder={t('G-XXXXXXXXXX (optional)')}
+              />
+            </div>
+
+            <div className="grid gap-6 border-t border-border/50 pt-6">
+              <div className="grid gap-2">
+                <h4 className="text-sm font-medium">{t('OpenRouter integration')}</h4>
+                <Label htmlFor="openrouter_key">{t('API key')}</Label>
+                <Input
+                  id="openrouter_key"
+                  name="openrouter_api_key"
+                  type="password"
+                  autoComplete="off"
+                  maxLength={256}
+                  value={openRouterApiKey}
+                  onChange={event => setOpenRouterApiKey(event.target.value)}
+                  disabled={isPending}
+                  placeholder={
+                    initialOpenRouterApiKeyConfigured && !trimmedOpenRouterApiKey
+                      ? '••••••••••••••••'
+                      : t('Enter OpenRouter API key')
+                  }
+                />
+                <p className="text-xs text-muted-foreground">
+                  {t('Generate an API key at')}
+                  {' '}
+                  <a
+                    href="https://openrouter.ai/settings/keys"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline underline-offset-2"
+                  >
+                    openrouter.ai/settings/keys
+                  </a>
+                  .
+                </p>
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="openrouter_model">{t('Preferred OpenRouter model')}</Label>
+                <div className="flex items-center gap-2">
+                  <Select
+                    value={openRouterSelectValue}
+                    onValueChange={handleOpenRouterModelChange}
+                    disabled={!openRouterModelSelectEnabled || isPending}
+                  >
+                    <SelectTrigger id="openrouter_model" className="h-12! w-full max-w-md justify-between text-left">
+                      <SelectValue placeholder={t('Select a model')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={AUTOMATIC_MODEL_VALUE}>
+                        {t('Let OpenRouter decide')}
+                      </SelectItem>
+                      {openRouterModelOptions.map(model => (
+                        <SelectItem key={model.id} value={model.id}>
+                          <div className="flex flex-col gap-0.5">
+                            <span>{model.label}</span>
+                            {model.contextWindow
+                              ? (
+                                  <span className="text-xs text-muted-foreground">
+                                    {t('Context window:')}
+                                    {' '}
+                                    {model.contextWindow.toLocaleString()}
+                                  </span>
+                                )
+                              : null}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="icon"
+                    className="size-12 shrink-0"
+                    disabled={!trimmedOpenRouterApiKey || isPending || isRefreshingOpenRouterModels}
+                    onClick={handleRefreshOpenRouterModels}
+                    title={t('Refresh models')}
+                    aria-label={t('Refresh models')}
+                  >
+                    <RefreshCwIcon className={cn('size-4', { 'animate-spin': isRefreshingOpenRouterModels })} />
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {t('Models with live browsing (for example')}
+                  {' '}
+                  <code>perplexity/sonar</code>
+                  {t(') perform best. Explore available models at')}
+                  {' '}
+                  <a
+                    href="https://openrouter.ai/models"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline underline-offset-2"
+                  >
+                    openrouter.ai/models
+                  </a>
+                  .
+                </p>
+                {openRouterModelsError
+                  ? (
+                      <p className="text-xs text-destructive">{openRouterModelsError}</p>
+                    )
+                  : null}
+              </div>
+            </div>
+
+            <div className="grid gap-4 border-t border-border/50 pt-6 md:grid-cols-2">
+              <div className="grid gap-2 md:col-span-2">
+                <h4 className="text-sm font-medium">{t('LI.FI integration')}</h4>
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="theme-lifi-integrator">{t('Integrator name')}</Label>
+                <Input
+                  id="theme-lifi-integrator"
+                  name="lifi_integrator"
+                  maxLength={120}
+                  value={lifiIntegrator}
+                  onChange={event => setLifiIntegrator(event.target.value)}
+                  disabled={isPending}
+                  placeholder={t('your-app-id (optional)')}
+                />
+                <p className="text-xs text-muted-foreground">
+                  {t('Create an account and generate one at')}
+                  {' '}
+                  <a
+                    href="https://li.fi"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline underline-offset-2"
+                  >
+                    li.fi
+                  </a>
+                  .
+                </p>
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="theme-lifi-api-key">{t('API key')}</Label>
+                <Input
+                  id="theme-lifi-api-key"
+                  name="lifi_api_key"
+                  type="password"
+                  autoComplete="off"
+                  maxLength={256}
+                  value={lifiApiKey}
+                  onChange={event => setLifiApiKey(event.target.value)}
+                  disabled={isPending}
+                  placeholder={
+                    initialLiFiApiKeyConfigured && !lifiApiKey.trim()
+                      ? '••••••••••••••••'
+                      : t('Enter API key (optional)')
+                  }
+                />
+                <p className="invisible text-xs text-muted-foreground" aria-hidden="true">
+                  {t('Spacer')}
+                </p>
+              </div>
+            </div>
+
+            <div className="grid gap-3 border-t border-border/50 pt-6">
               <div className="flex items-center justify-between gap-3">
                 <div className="grid gap-1">
-                  <Label>{t('Custom javascript code')}</Label>
-                  <p className="text-xs text-muted-foreground">
-                    Add one or more named scripts. Paste raw JavaScript or full
-                    {' '}
-                    <code>&lt;script&gt;</code>
-                    {' '}
-                    blocks from trusted providers only.
+                  <h4 className="text-sm font-medium">{t('Custom Integrations')}</h4>
+                  <p className="text-sm text-muted-foreground">
+                    {t('Add external scripts to enable features like chat, analytics, tracking, and more')}
                   </p>
                 </div>
                 <Button
@@ -869,7 +1032,7 @@ export default function AdminGeneralSettingsForm({
                   disabled={isPending || customJavascriptCodes.length >= MAX_CUSTOM_JAVASCRIPT_CODES}
                   onClick={handleAddCustomJavascriptCode}
                 >
-                  {t('Add script')}
+                  {t('Add Integration')}
                 </Button>
               </div>
 
@@ -912,7 +1075,7 @@ export default function AdminGeneralSettingsForm({
                           </div>
 
                           <div className="grid gap-2">
-                            <Label htmlFor={`theme-custom-javascript-code-snippet-${index}`}>{t('Script snippet')}</Label>
+                            <Label htmlFor={`theme-custom-javascript-code-snippet-${index}`}>{t('Paste your JavaScript snippet here')}</Label>
                             <Textarea
                               id={`theme-custom-javascript-code-snippet-${index}`}
                               value={code.snippet}
@@ -923,7 +1086,7 @@ export default function AdminGeneralSettingsForm({
                               disabled={isPending}
                               rows={6}
                               maxLength={MAX_CUSTOM_JAVASCRIPT_CODE_SNIPPET_LENGTH}
-                              placeholder={t('Paste the provider script or raw JavaScript')}
+                              placeholder={'<script src="https://..."></script>'}
                               className="font-mono text-xs"
                             />
                           </div>
@@ -961,182 +1124,8 @@ export default function AdminGeneralSettingsForm({
                         </div>
                       </div>
                     ))
-                  : (
-                      <div className="
-                        rounded-xl border border-dashed border-border/70 px-4 py-5 text-sm text-muted-foreground
-                      "
-                      >
-                        {t('No custom javascript code added yet.')}
-                      </div>
-                    )}
+                  : null}
               </div>
-            </div>
-          </div>
-        </SettingsAccordionSection>
-
-        <SettingsAccordionSection
-          value="openrouter"
-          isOpen={openSections.includes('openrouter')}
-          onToggle={toggleSection}
-          header={<h3 className="text-base font-medium">{t('OpenRouter integration')}</h3>}
-        >
-          <div className="grid gap-6">
-            <div className="grid gap-2">
-              <Label htmlFor="openrouter_key">{t('API key')}</Label>
-              <Input
-                id="openrouter_key"
-                name="openrouter_api_key"
-                type="password"
-                autoComplete="off"
-                maxLength={256}
-                value={openRouterApiKey}
-                onChange={event => setOpenRouterApiKey(event.target.value)}
-                disabled={isPending}
-                placeholder={
-                  initialOpenRouterApiKeyConfigured && !trimmedOpenRouterApiKey
-                    ? '••••••••••••••••'
-                    : t('Enter OpenRouter API key')
-                }
-              />
-              <p className="text-xs text-muted-foreground">
-                {t('Generate an API key at')}
-                {' '}
-                <a
-                  href="https://openrouter.ai/settings/keys"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline underline-offset-2"
-                >
-                  openrouter.ai/settings/keys
-                </a>
-                .
-              </p>
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="openrouter_model">{t('Preferred OpenRouter model')}</Label>
-              <div className="flex items-center gap-2">
-                <Select
-                  value={openRouterSelectValue}
-                  onValueChange={handleOpenRouterModelChange}
-                  disabled={!openRouterModelSelectEnabled || isPending}
-                >
-                  <SelectTrigger id="openrouter_model" className="h-12! w-full max-w-md justify-between text-left">
-                    <SelectValue placeholder={t('Select a model')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={AUTOMATIC_MODEL_VALUE}>
-                      {t('Let OpenRouter decide')}
-                    </SelectItem>
-                    {openRouterModelOptions.map(model => (
-                      <SelectItem key={model.id} value={model.id}>
-                        <div className="flex flex-col gap-0.5">
-                          <span>{model.label}</span>
-                          {model.contextWindow
-                            ? (
-                                <span className="text-xs text-muted-foreground">
-                                  {t('Context window:')}
-                                  {' '}
-                                  {model.contextWindow.toLocaleString()}
-                                </span>
-                              )
-                            : null}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="icon"
-                  className="size-12 shrink-0"
-                  disabled={!trimmedOpenRouterApiKey || isPending || isRefreshingOpenRouterModels}
-                  onClick={handleRefreshOpenRouterModels}
-                  title={t('Refresh models')}
-                  aria-label={t('Refresh models')}
-                >
-                  <RefreshCwIcon className={cn('size-4', { 'animate-spin': isRefreshingOpenRouterModels })} />
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {t('Models with live browsing (for example')}
-                {' '}
-                <code>perplexity/sonar</code>
-                {t(') perform best. Explore available models at')}
-                {' '}
-                <a
-                  href="https://openrouter.ai/models"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline underline-offset-2"
-                >
-                  openrouter.ai/models
-                </a>
-                .
-              </p>
-              {openRouterModelsError
-                ? (
-                    <p className="text-xs text-destructive">{openRouterModelsError}</p>
-                  )
-                : null}
-            </div>
-          </div>
-        </SettingsAccordionSection>
-
-        <SettingsAccordionSection
-          value="lifi"
-          isOpen={openSections.includes('lifi')}
-          onToggle={toggleSection}
-          header={<h3 className="text-base font-medium">{t('LI.FI integration')}</h3>}
-        >
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="grid gap-2">
-              <Label htmlFor="theme-lifi-integrator">{t('Integrator name')}</Label>
-              <Input
-                id="theme-lifi-integrator"
-                name="lifi_integrator"
-                maxLength={120}
-                value={lifiIntegrator}
-                onChange={event => setLifiIntegrator(event.target.value)}
-                disabled={isPending}
-                placeholder={t('your-app-id (optional)')}
-              />
-              <p className="text-xs text-muted-foreground">
-                {t('Create an account and generate one at')}
-                {' '}
-                <a
-                  href="https://li.fi"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline underline-offset-2"
-                >
-                  li.fi
-                </a>
-                .
-              </p>
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="theme-lifi-api-key">{t('API key')}</Label>
-              <Input
-                id="theme-lifi-api-key"
-                name="lifi_api_key"
-                type="password"
-                autoComplete="off"
-                maxLength={256}
-                value={lifiApiKey}
-                onChange={event => setLifiApiKey(event.target.value)}
-                disabled={isPending}
-                placeholder={
-                  initialLiFiApiKeyConfigured && !lifiApiKey.trim()
-                    ? '••••••••••••••••'
-                    : t('Enter API key (optional)')
-                }
-              />
-              <p className="invisible text-xs text-muted-foreground" aria-hidden="true">
-                {t('Spacer')}
-              </p>
             </div>
           </div>
         </SettingsAccordionSection>
