@@ -1,4 +1,4 @@
-import type { SupportWidgetScriptConfig } from '@/lib/support-widget-scripts'
+import type { CustomJavascriptCodeConfig } from '@/lib/custom-javascript-code'
 import { sanitizeSvg } from '@/lib/utils'
 
 export const THEME_SITE_LOGO_MODES = ['svg', 'image'] as const
@@ -58,7 +58,7 @@ export interface ThemeSiteIdentity extends ThemeSiteSocialLinks {
   logoUrl: string
   googleAnalyticsId: string | null
   supportUrl: string | null
-  supportWidgetScripts: SupportWidgetScriptConfig[]
+  customJavascriptCodes: CustomJavascriptCodeConfig[]
   pwaIcon192Path: string | null
   pwaIcon512Path: string | null
   pwaIcon192Url: string
@@ -105,7 +105,7 @@ export function createDefaultThemeSiteIdentity(): ThemeSiteIdentity {
     linkedinLink: null,
     youtubeLink: null,
     supportUrl: null,
-    supportWidgetScripts: [],
+    customJavascriptCodes: [],
     pwaIcon192Path: null,
     pwaIcon512Path: null,
     pwaIcon192Url: DEFAULT_THEME_SITE_PWA_ICON_192_URL,

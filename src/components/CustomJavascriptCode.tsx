@@ -1,24 +1,24 @@
 'use client'
 
 import type {
-  SupportWidgetScriptAttributeValue,
-  SupportWidgetScriptConfig,
-} from '@/lib/support-widget-scripts'
+  CustomJavascriptCodeAttributeValue,
+  CustomJavascriptCodeConfig,
+} from '@/lib/custom-javascript-code'
 import { usePathname } from 'next/navigation'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
-  isSupportWidgetScriptEnabledOnPathname,
-  parseSupportWidgetScriptTags,
-} from '@/lib/support-widget-scripts'
+  isCustomJavascriptCodeEnabledOnPathname,
+  parseCustomJavascriptCodeTags,
+} from '@/lib/custom-javascript-code'
 
-interface SiteSupportWidgetScriptsProps {
+interface CustomJavascriptCodeProps {
   locale: string
-  scripts: SupportWidgetScriptConfig[]
+  codes: CustomJavascriptCodeConfig[]
 }
 
-interface SupportWidgetWindow extends Window {
-  __supportWidgetExecutedSnippets?: Set<string>
-  __supportWidgetHasExecutedScript?: boolean
+interface CustomJavascriptCodeWindow extends Window {
+  __customJavascriptCodeExecutedSnippets?: Set<string>
+  __customJavascriptCodeHasExecutedCode?: boolean
 }
 
 function stripLocalePrefix(pathname: string | null, locale: string) {
@@ -56,7 +56,7 @@ function resolveDomAttributeName(attributeName: string) {
 function applyScriptAttribute(
   scriptElement: HTMLScriptElement,
   attributeName: string,
-  attributeValue: SupportWidgetScriptAttributeValue,
+  attributeValue: CustomJavascriptCodeAttributeValue,
 ) {
   const domAttributeName = resolveDomAttributeName(attributeName)
 
@@ -95,63 +95,63 @@ function applyScriptAttribute(
   }
 }
 
-function getSupportWidgetExecutionRegistry() {
-  const supportWidgetWindow = window as SupportWidgetWindow
+function getCustomJavascriptCodeExecutionRegistry() {
+  const customJavascriptCodeWindow = window as CustomJavascriptCodeWindow
 
-  if (!supportWidgetWindow.__supportWidgetExecutedSnippets) {
-    supportWidgetWindow.__supportWidgetExecutedSnippets = new Set<string>()
+  if (!customJavascriptCodeWindow.__customJavascriptCodeExecutedSnippets) {
+    customJavascriptCodeWindow.__customJavascriptCodeExecutedSnippets = new Set<string>()
   }
 
-  return supportWidgetWindow.__supportWidgetExecutedSnippets
+  return customJavascriptCodeWindow.__customJavascriptCodeExecutedSnippets
 }
 
-function hasExecutedSupportWidgetScript() {
-  const supportWidgetWindow = window as SupportWidgetWindow
+function hasExecutedCustomJavascriptCode() {
+  const customJavascriptCodeWindow = window as CustomJavascriptCodeWindow
 
-  return supportWidgetWindow.__supportWidgetHasExecutedScript === true
+  return customJavascriptCodeWindow.__customJavascriptCodeHasExecutedCode === true
 }
 
-function markSupportWidgetScriptExecuted() {
-  const supportWidgetWindow = window as SupportWidgetWindow
-  supportWidgetWindow.__supportWidgetHasExecutedScript = true
+function markCustomJavascriptCodeExecuted() {
+  const customJavascriptCodeWindow = window as CustomJavascriptCodeWindow
+  customJavascriptCodeWindow.__customJavascriptCodeHasExecutedCode = true
 }
 
-export default function SiteSupportWidgetScripts({ locale, scripts }: SiteSupportWidgetScriptsProps) {
+export default function CustomJavascriptCode({ locale, codes }: CustomJavascriptCodeProps) {
   const pathname = usePathname()
   const localizedPathname = useMemo(() => stripLocalePrefix(pathname, locale), [locale, pathname])
-  const activeScripts = useMemo(
-    () => scripts.filter(script => isSupportWidgetScriptEnabledOnPathname(script, localizedPathname)),
-    [localizedPathname, scripts],
+  const activeCodes = useMemo(
+    () => codes.filter(code => isCustomJavascriptCodeEnabledOnPathname(code, localizedPathname)),
+    [codes, localizedPathname],
   )
-  const activeScriptSignature = useMemo(
-    () => activeScripts.map(script => `${script.name}\u0000${script.snippet}`).sort().join('\u0001'),
-    [activeScripts],
+  const activeCodeSignature = useMemo(
+    () => activeCodes.map(code => `${code.name}\u0000${code.snippet}`).sort().join('\u0001'),
+    [activeCodes],
   )
-  const previousActiveScriptSignatureRef = useRef<string | null>(null)
+  const previousActiveCodeSignatureRef = useRef<string | null>(null)
   const [hasInteracted, setHasInteracted] = useState(false)
 
   useEffect(() => {
-    const previousActiveScriptSignature = previousActiveScriptSignatureRef.current
-    previousActiveScriptSignatureRef.current = activeScriptSignature
+    const previousActiveCodeSignature = previousActiveCodeSignatureRef.current
+    previousActiveCodeSignatureRef.current = activeCodeSignature
     setHasInteracted(false)
 
-    if (previousActiveScriptSignature === null) {
+    if (previousActiveCodeSignature === null) {
       return
     }
 
-    if (previousActiveScriptSignature === activeScriptSignature) {
+    if (previousActiveCodeSignature === activeCodeSignature) {
       return
     }
 
-    if (!hasExecutedSupportWidgetScript()) {
+    if (!hasExecutedCustomJavascriptCode()) {
       return
     }
 
     window.location.reload()
-  }, [activeScriptSignature])
+  }, [activeCodeSignature])
 
   useEffect(() => {
-    if (hasInteracted || activeScripts.length === 0) {
+    if (hasInteracted || activeCodes.length === 0) {
       return
     }
 
@@ -170,32 +170,28 @@ export default function SiteSupportWidgetScripts({ locale, scripts }: SiteSuppor
       window.removeEventListener('touchstart', handleInteraction)
       window.removeEventListener('scroll', handleInteraction)
     }
-  }, [activeScripts.length, hasInteracted])
+  }, [activeCodes.length, hasInteracted])
 
   useEffect(() => {
-    if (!hasInteracted) {
+    if (!hasInteracted || activeCodes.length === 0) {
       return
     }
 
-    if (activeScripts.length === 0) {
-      return
-    }
+    const executionRegistry = getCustomJavascriptCodeExecutionRegistry()
 
-    const executionRegistry = getSupportWidgetExecutionRegistry()
-
-    for (const script of activeScripts) {
-      const executionKey = script.snippet.trim()
+    for (const code of activeCodes) {
+      const executionKey = code.snippet.trim()
       if (executionRegistry.has(executionKey)) {
         continue
       }
 
-      const parsedTags = parseSupportWidgetScriptTags(script.snippet)
+      const parsedTags = parseCustomJavascriptCodeTags(code.snippet)
       const appendedScriptElements: HTMLScriptElement[] = []
 
       try {
         for (const parsedTag of parsedTags) {
           const scriptElement = document.createElement('script')
-          scriptElement.setAttribute('data-support-widget-script', script.name)
+          scriptElement.setAttribute('data-custom-javascript-code', code.name)
 
           let hasAsyncAttribute = false
           let hasDeferAttribute = false
@@ -236,9 +232,9 @@ export default function SiteSupportWidgetScripts({ locale, scripts }: SiteSuppor
       }
 
       executionRegistry.add(executionKey)
-      markSupportWidgetScriptExecuted()
+      markCustomJavascriptCodeExecuted()
     }
-  }, [activeScripts, hasInteracted])
+  }, [activeCodes, hasInteracted])
 
   return null
 }

@@ -2,7 +2,7 @@
 
 import type { ReactNode } from 'react'
 import type { AdminThemeSiteSettingsInitialState } from '@/app/[locale]/admin/theme/_types/theme-form-state'
-import type { SupportWidgetDisablePage, SupportWidgetScriptConfig } from '@/lib/support-widget-scripts'
+import type { CustomJavascriptCodeConfig, CustomJavascriptCodeDisablePage } from '@/lib/custom-javascript-code'
 import { ChevronDownIcon, ImageUp, RefreshCwIcon } from 'lucide-react'
 import { useExtracted } from 'next-intl'
 import Image from 'next/image'
@@ -19,11 +19,11 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import {
-  MAX_SUPPORT_WIDGET_SCRIPT_NAME_LENGTH,
-  MAX_SUPPORT_WIDGET_SCRIPT_SNIPPET_LENGTH,
-  MAX_SUPPORT_WIDGET_SCRIPTS,
-  serializeSupportWidgetScripts,
-} from '@/lib/support-widget-scripts'
+  MAX_CUSTOM_JAVASCRIPT_CODE_NAME_LENGTH,
+  MAX_CUSTOM_JAVASCRIPT_CODE_SNIPPET_LENGTH,
+  MAX_CUSTOM_JAVASCRIPT_CODES,
+  serializeCustomJavascriptCodes,
+} from '@/lib/custom-javascript-code'
 import { cn, sanitizeSvg } from '@/lib/utils'
 
 const initialState = {
@@ -145,7 +145,7 @@ export default function AdminGeneralSettingsForm({
   const initialLinkedinLink = initialThemeSiteSettings.linkedinLink
   const initialYoutubeLink = initialThemeSiteSettings.youtubeLink
   const initialSupportUrl = initialThemeSiteSettings.supportUrl
-  const initialSupportWidgetScripts = initialThemeSiteSettings.supportWidgetScripts
+  const initialCustomJavascriptCodes = initialThemeSiteSettings.customJavascriptCodes
   const initialFeeRecipientWallet = initialThemeSiteSettings.feeRecipientWallet
   const initialLiFiIntegrator = initialThemeSiteSettings.lifiIntegrator
   const initialLiFiApiKey = initialThemeSiteSettings.lifiApiKey
@@ -173,7 +173,7 @@ export default function AdminGeneralSettingsForm({
   const [linkedinLink, setLinkedinLink] = useState(initialLinkedinLink)
   const [youtubeLink, setYoutubeLink] = useState(initialYoutubeLink)
   const [supportUrl, setSupportUrl] = useState(initialSupportUrl)
-  const [supportWidgetScripts, setSupportWidgetScripts] = useState<SupportWidgetScriptConfig[]>(initialSupportWidgetScripts)
+  const [customJavascriptCodes, setCustomJavascriptCodes] = useState<CustomJavascriptCodeConfig[]>(initialCustomJavascriptCodes)
   const [feeRecipientWallet, setFeeRecipientWallet] = useState(initialFeeRecipientWallet)
   const [lifiIntegrator, setLifiIntegrator] = useState(initialLiFiIntegrator)
   const [lifiApiKey, setLifiApiKey] = useState(initialLiFiApiKey)
@@ -256,8 +256,8 @@ export default function AdminGeneralSettingsForm({
   }, [initialSupportUrl])
 
   useEffect(() => {
-    setSupportWidgetScripts(initialSupportWidgetScripts)
-  }, [initialSupportWidgetScripts])
+    setCustomJavascriptCodes(initialCustomJavascriptCodes)
+  }, [initialCustomJavascriptCodes])
 
   useEffect(() => {
     setFeeRecipientWallet(initialFeeRecipientWallet)
@@ -323,11 +323,11 @@ export default function AdminGeneralSettingsForm({
   const pwaIcon512Preview = useMemo(() => {
     return pwaIcon512PreviewUrl ?? initialPwaIcon512Url
   }, [initialPwaIcon512Url, pwaIcon512PreviewUrl])
-  const serializedSupportWidgetScripts = useMemo(
-    () => serializeSupportWidgetScripts(supportWidgetScripts),
-    [supportWidgetScripts],
+  const serializedCustomJavascriptCodes = useMemo(
+    () => serializeCustomJavascriptCodes(customJavascriptCodes),
+    [customJavascriptCodes],
   )
-  const supportWidgetDisablePageOptions = useMemo(() => ([
+  const customJavascriptCodeDisablePageOptions = useMemo(() => ([
     { value: 'home' as const, label: t('Home') },
     { value: 'event' as const, label: '/event' },
     { value: 'portfolio' as const, label: '/portfolio' },
@@ -360,17 +360,17 @@ export default function AdminGeneralSettingsForm({
     })
   }
 
-  function updateSupportWidgetScript(
+  function updateCustomJavascriptCode(
     index: number,
-    updater: (script: SupportWidgetScriptConfig) => SupportWidgetScriptConfig,
+    updater: (code: CustomJavascriptCodeConfig) => CustomJavascriptCodeConfig,
   ) {
-    setSupportWidgetScripts(previous => previous.map((script, scriptIndex) => (
-      scriptIndex === index ? updater(script) : script
+    setCustomJavascriptCodes(previous => previous.map((code, codeIndex) => (
+      codeIndex === index ? updater(code) : code
     )))
   }
 
-  function handleAddSupportWidgetScript() {
-    setSupportWidgetScripts(previous => [
+  function handleAddCustomJavascriptCode() {
+    setCustomJavascriptCodes(previous => [
       ...previous,
       {
         name: '',
@@ -380,22 +380,22 @@ export default function AdminGeneralSettingsForm({
     ])
   }
 
-  function handleRemoveSupportWidgetScript(index: number) {
-    setSupportWidgetScripts(previous => previous.filter((_, scriptIndex) => scriptIndex !== index))
+  function handleRemoveCustomJavascriptCode(index: number) {
+    setCustomJavascriptCodes(previous => previous.filter((_, codeIndex) => codeIndex !== index))
   }
 
-  function handleToggleSupportWidgetDisableOn(
+  function handleToggleCustomJavascriptCodeDisableOn(
     index: number,
-    value: SupportWidgetDisablePage,
+    value: CustomJavascriptCodeDisablePage,
     checked: boolean,
   ) {
-    updateSupportWidgetScript(index, (script) => {
+    updateCustomJavascriptCode(index, (code) => {
       const disabledOn = checked
-        ? Array.from(new Set([...script.disabledOn, value]))
-        : script.disabledOn.filter(entry => entry !== value)
+        ? Array.from(new Set([...code.disabledOn, value]))
+        : code.disabledOn.filter(entry => entry !== value)
 
       return {
-        ...script,
+        ...code,
         disabledOn,
       }
     })
@@ -449,7 +449,7 @@ export default function AdminGeneralSettingsForm({
       <input type="hidden" name="pwa_icon_192_path" value={pwaIcon192Path} />
       <input type="hidden" name="pwa_icon_512_path" value={pwaIcon512Path} />
       <input type="hidden" name="openrouter_model" value={openRouterModel} />
-      <input type="hidden" name="support_widget_scripts_json" value={serializedSupportWidgetScripts} />
+      <input type="hidden" name="custom_javascript_codes_json" value={serializedCustomJavascriptCodes} />
 
       <div className="grid gap-6">
         <SettingsAccordionSection
@@ -866,30 +866,30 @@ export default function AdminGeneralSettingsForm({
                   type="button"
                   variant="outline"
                   size="sm"
-                  disabled={isPending || supportWidgetScripts.length >= MAX_SUPPORT_WIDGET_SCRIPTS}
-                  onClick={handleAddSupportWidgetScript}
+                  disabled={isPending || customJavascriptCodes.length >= MAX_CUSTOM_JAVASCRIPT_CODES}
+                  onClick={handleAddCustomJavascriptCode}
                 >
                   {t('Add script')}
                 </Button>
               </div>
 
               <div className="grid gap-3">
-                {supportWidgetScripts.length > 0
-                  ? supportWidgetScripts.map((script, index) => (
+                {customJavascriptCodes.length > 0
+                  ? customJavascriptCodes.map((code, index) => (
                       <div
-                        key={`support-widget-script-${index}`}
+                        key={`custom-javascript-code-${index}`}
                         className="grid gap-4 rounded-xl border border-border/60 bg-muted/10 p-4"
                       >
                         <div className="flex items-start justify-between gap-3">
                           <h4 className="text-sm font-medium">
-                            {script.name.trim() || `${t('Script')} ${index + 1}`}
+                            {code.name.trim() || `${t('Script')} ${index + 1}`}
                           </h4>
                           <Button
                             type="button"
                             variant="ghost"
                             size="sm"
                             disabled={isPending}
-                            onClick={() => handleRemoveSupportWidgetScript(index)}
+                            onClick={() => handleRemoveCustomJavascriptCode(index)}
                           >
                             {t('Remove')}
                           </Button>
@@ -897,32 +897,32 @@ export default function AdminGeneralSettingsForm({
 
                         <div className="grid gap-4">
                           <div className="grid gap-2">
-                            <Label htmlFor={`theme-support-widget-script-name-${index}`}>{t('Name')}</Label>
+                            <Label htmlFor={`theme-custom-javascript-code-name-${index}`}>{t('Name')}</Label>
                             <Input
-                              id={`theme-support-widget-script-name-${index}`}
-                              value={script.name}
-                              onChange={event => updateSupportWidgetScript(index, current => ({
+                              id={`theme-custom-javascript-code-name-${index}`}
+                              value={code.name}
+                              onChange={event => updateCustomJavascriptCode(index, current => ({
                                 ...current,
                                 name: event.target.value,
                               }))}
                               disabled={isPending}
-                              maxLength={MAX_SUPPORT_WIDGET_SCRIPT_NAME_LENGTH}
+                              maxLength={MAX_CUSTOM_JAVASCRIPT_CODE_NAME_LENGTH}
                               placeholder={t('Support widget')}
                             />
                           </div>
 
                           <div className="grid gap-2">
-                            <Label htmlFor={`theme-support-widget-script-snippet-${index}`}>{t('Script snippet')}</Label>
+                            <Label htmlFor={`theme-custom-javascript-code-snippet-${index}`}>{t('Script snippet')}</Label>
                             <Textarea
-                              id={`theme-support-widget-script-snippet-${index}`}
-                              value={script.snippet}
-                              onChange={event => updateSupportWidgetScript(index, current => ({
+                              id={`theme-custom-javascript-code-snippet-${index}`}
+                              value={code.snippet}
+                              onChange={event => updateCustomJavascriptCode(index, current => ({
                                 ...current,
                                 snippet: event.target.value,
                               }))}
                               disabled={isPending}
                               rows={6}
-                              maxLength={MAX_SUPPORT_WIDGET_SCRIPT_SNIPPET_LENGTH}
+                              maxLength={MAX_CUSTOM_JAVASCRIPT_CODE_SNIPPET_LENGTH}
                               placeholder={t('Paste the provider script or raw JavaScript')}
                               className="font-mono text-xs"
                             />
@@ -932,8 +932,8 @@ export default function AdminGeneralSettingsForm({
                         <div className="grid gap-2">
                           <Label>{t('Disable on')}</Label>
                           <div className="flex flex-wrap gap-3">
-                            {supportWidgetDisablePageOptions.map((option) => {
-                              const fieldId = `theme-support-widget-script-${index}-disable-${option.value}`
+                            {customJavascriptCodeDisablePageOptions.map((option) => {
+                              const fieldId = `theme-custom-javascript-code-${index}-disable-${option.value}`
                               return (
                                 <label
                                   key={option.value}
@@ -944,14 +944,14 @@ export default function AdminGeneralSettingsForm({
                                       px-3 py-2 text-sm transition-colors
                                       hover:bg-muted/40
                                     `,
-                                    script.disabledOn.includes(option.value) && 'border-primary/50 bg-primary/5',
+                                    code.disabledOn.includes(option.value) && 'border-primary/50 bg-primary/5',
                                   )}
                                 >
                                   <Checkbox
                                     id={fieldId}
-                                    checked={script.disabledOn.includes(option.value)}
+                                    checked={code.disabledOn.includes(option.value)}
                                     disabled={isPending}
-                                    onCheckedChange={checked => handleToggleSupportWidgetDisableOn(index, option.value, checked === true)}
+                                    onCheckedChange={checked => handleToggleCustomJavascriptCodeDisableOn(index, option.value, checked === true)}
                                   />
                                   <span>{option.label}</span>
                                 </label>

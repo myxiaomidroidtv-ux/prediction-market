@@ -1,26 +1,26 @@
 const SCRIPT_TAG_PATTERN = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi
 const SCRIPT_ATTRIBUTE_PATTERN = /([^\s=/>]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g
-const SUPPORT_WIDGET_SCRIPT_TAG_PATTERN = /<script\b/i
-export const MAX_SUPPORT_WIDGET_SCRIPTS = 12
-export const MAX_SUPPORT_WIDGET_SCRIPT_NAME_LENGTH = 80
-export const MAX_SUPPORT_WIDGET_SCRIPT_SNIPPET_LENGTH = 20_000
+const CUSTOM_JAVASCRIPT_CODE_TAG_PATTERN = /<script\b/i
+export const MAX_CUSTOM_JAVASCRIPT_CODES = 12
+export const MAX_CUSTOM_JAVASCRIPT_CODE_NAME_LENGTH = 80
+export const MAX_CUSTOM_JAVASCRIPT_CODE_SNIPPET_LENGTH = 20_000
 
-export const SUPPORT_WIDGET_DISABLE_PAGE_OPTIONS = ['home', 'event', 'portfolio', 'admin'] as const
-export type SupportWidgetDisablePage = typeof SUPPORT_WIDGET_DISABLE_PAGE_OPTIONS[number]
-export type SupportWidgetPageBucket = SupportWidgetDisablePage | 'other'
-export type SupportWidgetScriptAttributeValue = string | true
+export const CUSTOM_JAVASCRIPT_CODE_DISABLE_PAGE_OPTIONS = ['home', 'event', 'portfolio', 'admin'] as const
+export type CustomJavascriptCodeDisablePage = typeof CUSTOM_JAVASCRIPT_CODE_DISABLE_PAGE_OPTIONS[number]
+export type CustomJavascriptCodePageBucket = CustomJavascriptCodeDisablePage | 'other'
+export type CustomJavascriptCodeAttributeValue = string | true
 
-const SUPPORT_WIDGET_DISABLE_PAGE_SET = new Set<string>(SUPPORT_WIDGET_DISABLE_PAGE_OPTIONS)
+const CUSTOM_JAVASCRIPT_CODE_DISABLE_PAGE_SET = new Set<string>(CUSTOM_JAVASCRIPT_CODE_DISABLE_PAGE_OPTIONS)
 
-export interface SupportWidgetScriptConfig {
+export interface CustomJavascriptCodeConfig {
   name: string
   snippet: string
-  disabledOn: SupportWidgetDisablePage[]
+  disabledOn: CustomJavascriptCodeDisablePage[]
 }
 
-export interface ParsedSupportWidgetScriptTag {
+export interface ParsedCustomJavascriptCodeTag {
   id: string
-  attributes: Record<string, SupportWidgetScriptAttributeValue>
+  attributes: Record<string, CustomJavascriptCodeAttributeValue>
   content: string | null
 }
 
@@ -40,7 +40,7 @@ function normalizeAttributeName(name: string) {
 }
 
 function parseScriptAttributes(rawAttributes: string) {
-  const attributes: Record<string, SupportWidgetScriptAttributeValue> = {}
+  const attributes: Record<string, CustomJavascriptCodeAttributeValue> = {}
   SCRIPT_ATTRIBUTE_PATTERN.lastIndex = 0
 
   for (let match = SCRIPT_ATTRIBUTE_PATTERN.exec(rawAttributes); match; match = SCRIPT_ATTRIBUTE_PATTERN.exec(rawAttributes)) {
@@ -56,20 +56,20 @@ function parseScriptAttributes(rawAttributes: string) {
   return attributes
 }
 
-function validateSupportWidgetSnippet(value: unknown, sourceLabel: string) {
+function validateCustomJavascriptCodeSnippet(value: unknown, sourceLabel: string) {
   const normalized = typeof value === 'string' ? value.trim() : ''
   if (!normalized) {
     return { value: null as string | null, error: `${sourceLabel} is required.` }
   }
 
-  if (normalized.length > MAX_SUPPORT_WIDGET_SCRIPT_SNIPPET_LENGTH) {
+  if (normalized.length > MAX_CUSTOM_JAVASCRIPT_CODE_SNIPPET_LENGTH) {
     return {
       value: null as string | null,
-      error: `${sourceLabel} must be at most ${MAX_SUPPORT_WIDGET_SCRIPT_SNIPPET_LENGTH.toLocaleString()} characters.`,
+      error: `${sourceLabel} must be at most ${MAX_CUSTOM_JAVASCRIPT_CODE_SNIPPET_LENGTH.toLocaleString()} characters.`,
     }
   }
 
-  if (normalized.includes('<') && !SUPPORT_WIDGET_SCRIPT_TAG_PATTERN.test(normalized)) {
+  if (normalized.includes('<') && !CUSTOM_JAVASCRIPT_CODE_TAG_PATTERN.test(normalized)) {
     return {
       value: null as string | null,
       error: `${sourceLabel} must be raw JavaScript or a provider <script> snippet.`,
@@ -79,44 +79,44 @@ function validateSupportWidgetSnippet(value: unknown, sourceLabel: string) {
   return { value: normalized, error: null as string | null }
 }
 
-function normalizeSupportWidgetScriptName(value: unknown, sourceLabel: string) {
+function normalizeCustomJavascriptCodeName(value: unknown, sourceLabel: string) {
   const normalized = typeof value === 'string' ? value.trim() : ''
   if (!normalized) {
     return { value: null as string | null, error: `${sourceLabel} is required.` }
   }
 
-  if (normalized.length > MAX_SUPPORT_WIDGET_SCRIPT_NAME_LENGTH) {
+  if (normalized.length > MAX_CUSTOM_JAVASCRIPT_CODE_NAME_LENGTH) {
     return {
       value: null as string | null,
-      error: `${sourceLabel} must be at most ${MAX_SUPPORT_WIDGET_SCRIPT_NAME_LENGTH} characters.`,
+      error: `${sourceLabel} must be at most ${MAX_CUSTOM_JAVASCRIPT_CODE_NAME_LENGTH} characters.`,
     }
   }
 
   return { value: normalized, error: null as string | null }
 }
 
-function normalizeSupportWidgetDisabledOn(value: unknown, sourceLabel: string) {
+function normalizeCustomJavascriptCodeDisabledOn(value: unknown, sourceLabel: string) {
   if (value === undefined || value === null) {
-    return { value: [] as SupportWidgetDisablePage[], error: null as string | null }
+    return { value: [] as CustomJavascriptCodeDisablePage[], error: null as string | null }
   }
 
   if (!Array.isArray(value)) {
-    return { value: [] as SupportWidgetDisablePage[], error: `${sourceLabel} is invalid.` }
+    return { value: [] as CustomJavascriptCodeDisablePage[], error: `${sourceLabel} is invalid.` }
   }
 
-  const deduped: SupportWidgetDisablePage[] = []
-  const seen = new Set<SupportWidgetDisablePage>()
+  const deduped: CustomJavascriptCodeDisablePage[] = []
+  const seen = new Set<CustomJavascriptCodeDisablePage>()
 
   for (const entry of value) {
     if (typeof entry !== 'string') {
-      return { value: [] as SupportWidgetDisablePage[], error: `${sourceLabel} is invalid.` }
+      return { value: [] as CustomJavascriptCodeDisablePage[], error: `${sourceLabel} is invalid.` }
     }
 
-    if (!SUPPORT_WIDGET_DISABLE_PAGE_SET.has(entry)) {
-      return { value: [] as SupportWidgetDisablePage[], error: `${sourceLabel} is invalid.` }
+    if (!CUSTOM_JAVASCRIPT_CODE_DISABLE_PAGE_SET.has(entry)) {
+      return { value: [] as CustomJavascriptCodeDisablePage[], error: `${sourceLabel} is invalid.` }
     }
 
-    const normalizedEntry = entry as SupportWidgetDisablePage
+    const normalizedEntry = entry as CustomJavascriptCodeDisablePage
 
     if (seen.has(normalizedEntry)) {
       continue
@@ -129,28 +129,28 @@ function normalizeSupportWidgetDisabledOn(value: unknown, sourceLabel: string) {
   return { value: deduped, error: null as string | null }
 }
 
-function normalizeSupportWidgetScriptEntry(value: unknown, index: number) {
+function normalizeCustomJavascriptCodeEntry(value: unknown, index: number) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    return { value: null as SupportWidgetScriptConfig | null, error: `Support widget script ${index + 1} is invalid.` }
+    return { value: null as CustomJavascriptCodeConfig | null, error: `Custom javascript code ${index + 1} is invalid.` }
   }
 
   const rawEntry = value as Record<string, unknown>
-  const nameValidated = normalizeSupportWidgetScriptName(rawEntry.name, `Support widget script ${index + 1} name`)
+  const nameValidated = normalizeCustomJavascriptCodeName(rawEntry.name, `Custom javascript code ${index + 1} name`)
   if (nameValidated.error) {
-    return { value: null as SupportWidgetScriptConfig | null, error: nameValidated.error }
+    return { value: null as CustomJavascriptCodeConfig | null, error: nameValidated.error }
   }
 
-  const snippetValidated = validateSupportWidgetSnippet(rawEntry.snippet, `Support widget script ${index + 1} snippet`)
+  const snippetValidated = validateCustomJavascriptCodeSnippet(rawEntry.snippet, `Custom javascript code ${index + 1} snippet`)
   if (snippetValidated.error) {
-    return { value: null as SupportWidgetScriptConfig | null, error: snippetValidated.error }
+    return { value: null as CustomJavascriptCodeConfig | null, error: snippetValidated.error }
   }
 
-  const disabledOnValidated = normalizeSupportWidgetDisabledOn(
+  const disabledOnValidated = normalizeCustomJavascriptCodeDisabledOn(
     rawEntry.disabledOn,
-    `Support widget script ${index + 1} disabled pages`,
+    `Custom javascript code ${index + 1} disabled pages`,
   )
   if (disabledOnValidated.error) {
-    return { value: null as SupportWidgetScriptConfig | null, error: disabledOnValidated.error }
+    return { value: null as CustomJavascriptCodeConfig | null, error: disabledOnValidated.error }
   }
 
   return {
@@ -163,18 +163,18 @@ function normalizeSupportWidgetScriptEntry(value: unknown, index: number) {
   }
 }
 
-export function serializeSupportWidgetScripts(scripts: SupportWidgetScriptConfig[]) {
-  return scripts.length > 0 ? JSON.stringify(scripts) : ''
+export function serializeCustomJavascriptCodes(codes: CustomJavascriptCodeConfig[]) {
+  return codes.length > 0 ? JSON.stringify(codes) : ''
 }
 
-export function validateSupportWidgetScriptsJson(
+export function validateCustomJavascriptCodesJson(
   value: string | null | undefined,
   sourceLabel: string,
 ) {
   const normalized = typeof value === 'string' ? value.trim() : ''
   if (!normalized) {
     return {
-      value: [] as SupportWidgetScriptConfig[],
+      value: [] as CustomJavascriptCodeConfig[],
       valueJson: '',
       error: null as string | null,
     }
@@ -186,7 +186,7 @@ export function validateSupportWidgetScriptsJson(
   }
   catch {
     return {
-      value: null as SupportWidgetScriptConfig[] | null,
+      value: null as CustomJavascriptCodeConfig[] | null,
       valueJson: '',
       error: `${sourceLabel} must be valid JSON.`,
     }
@@ -194,28 +194,28 @@ export function validateSupportWidgetScriptsJson(
 
   if (!Array.isArray(parsed)) {
     return {
-      value: null as SupportWidgetScriptConfig[] | null,
+      value: null as CustomJavascriptCodeConfig[] | null,
       valueJson: '',
       error: `${sourceLabel} must be a list of scripts.`,
     }
   }
 
-  if (parsed.length > MAX_SUPPORT_WIDGET_SCRIPTS) {
+  if (parsed.length > MAX_CUSTOM_JAVASCRIPT_CODES) {
     return {
-      value: null as SupportWidgetScriptConfig[] | null,
+      value: null as CustomJavascriptCodeConfig[] | null,
       valueJson: '',
-      error: `${sourceLabel} must contain at most ${MAX_SUPPORT_WIDGET_SCRIPTS} scripts.`,
+      error: `${sourceLabel} must contain at most ${MAX_CUSTOM_JAVASCRIPT_CODES} scripts.`,
     }
   }
 
-  const normalizedScripts: SupportWidgetScriptConfig[] = []
+  const normalizedCodes: CustomJavascriptCodeConfig[] = []
   const seenNames = new Set<string>()
 
   for (const [index, entry] of parsed.entries()) {
-    const normalizedEntry = normalizeSupportWidgetScriptEntry(entry, index)
+    const normalizedEntry = normalizeCustomJavascriptCodeEntry(entry, index)
     if (normalizedEntry.error || !normalizedEntry.value) {
       return {
-        value: null as SupportWidgetScriptConfig[] | null,
+        value: null as CustomJavascriptCodeConfig[] | null,
         valueJson: '',
         error: normalizedEntry.error ?? `${sourceLabel} is invalid.`,
       }
@@ -224,19 +224,19 @@ export function validateSupportWidgetScriptsJson(
     const nameKey = normalizedEntry.value.name.toLowerCase()
     if (seenNames.has(nameKey)) {
       return {
-        value: null as SupportWidgetScriptConfig[] | null,
+        value: null as CustomJavascriptCodeConfig[] | null,
         valueJson: '',
         error: `${sourceLabel} contains duplicate script names.`,
       }
     }
 
     seenNames.add(nameKey)
-    normalizedScripts.push(normalizedEntry.value)
+    normalizedCodes.push(normalizedEntry.value)
   }
 
   return {
-    value: normalizedScripts,
-    valueJson: serializeSupportWidgetScripts(normalizedScripts),
+    value: normalizedCodes,
+    valueJson: serializeCustomJavascriptCodes(normalizedCodes),
     error: null as string | null,
   }
 }
@@ -254,7 +254,7 @@ function normalizePathname(pathname: string | null | undefined) {
   return normalized.endsWith('/') ? normalized.slice(0, -1) : normalized
 }
 
-export function resolveSupportWidgetPageBucket(pathname: string | null | undefined): SupportWidgetPageBucket {
+export function resolveCustomJavascriptCodePageBucket(pathname: string | null | undefined): CustomJavascriptCodePageBucket {
   const normalizedPathname = normalizePathname(pathname)
 
   if (normalizedPathname === '/') {
@@ -276,39 +276,39 @@ export function resolveSupportWidgetPageBucket(pathname: string | null | undefin
   return 'other'
 }
 
-export function isSupportWidgetScriptEnabledOnPathname(
-  script: Pick<SupportWidgetScriptConfig, 'disabledOn'>,
+export function isCustomJavascriptCodeEnabledOnPathname(
+  code: Pick<CustomJavascriptCodeConfig, 'disabledOn'>,
   pathname: string | null | undefined,
 ) {
-  const pageBucket = resolveSupportWidgetPageBucket(pathname)
+  const pageBucket = resolveCustomJavascriptCodePageBucket(pathname)
   if (pageBucket === 'other') {
     return true
   }
 
-  return !script.disabledOn.includes(pageBucket)
+  return !code.disabledOn.includes(pageBucket)
 }
 
-export function parseSupportWidgetScriptTags(snippet: string | null | undefined): ParsedSupportWidgetScriptTag[] {
+export function parseCustomJavascriptCodeTags(snippet: string | null | undefined): ParsedCustomJavascriptCodeTag[] {
   const normalized = typeof snippet === 'string' ? snippet.trim() : ''
   if (!normalized) {
     return []
   }
 
-  if (!SUPPORT_WIDGET_SCRIPT_TAG_PATTERN.test(normalized)) {
+  if (!CUSTOM_JAVASCRIPT_CODE_TAG_PATTERN.test(normalized)) {
     return [{
-      id: 'support-widget-script-tag-0',
+      id: 'custom-javascript-code-tag-0',
       attributes: {},
       content: normalized,
     }]
   }
 
-  const scripts: ParsedSupportWidgetScriptTag[] = []
+  const scripts: ParsedCustomJavascriptCodeTag[] = []
   SCRIPT_TAG_PATTERN.lastIndex = 0
 
   for (let match = SCRIPT_TAG_PATTERN.exec(normalized); match; match = SCRIPT_TAG_PATTERN.exec(normalized)) {
     const content = (match[2] ?? '').trim()
     scripts.push({
-      id: `support-widget-script-tag-${scripts.length}`,
+      id: `custom-javascript-code-tag-${scripts.length}`,
       attributes: parseScriptAttributes(match[1] ?? ''),
       content: content || null,
     })

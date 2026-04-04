@@ -22,7 +22,7 @@ function createValidationInput() {
     linkedinLink: '',
     youtubeLink: '',
     supportUrl: '',
-    supportWidgetScriptsJson: '',
+    customJavascriptCodesJson: '',
     feeRecipientWallet: '',
     lifiIntegrator: '',
     lifiApiKey: '',
@@ -40,7 +40,7 @@ describe('themeSettings social links', () => {
       linkedinLink: 'linkedin.com/company/kuest',
       youtubeLink: 'youtube.com/@kuest',
       supportUrl: 'support@kuest.com',
-      supportWidgetScriptsJson: JSON.stringify([{
+      customJavascriptCodesJson: JSON.stringify([{
         name: 'Crisp',
         snippet: '<script>window.$crisp = [];</script>',
         disabledOn: ['admin'],
@@ -55,7 +55,7 @@ describe('themeSettings social links', () => {
     expect(result.data?.linkedinLinkValue).toBe('https://linkedin.com/company/kuest')
     expect(result.data?.youtubeLinkValue).toBe('https://youtube.com/@kuest')
     expect(result.data?.supportUrlValue).toBe('mailto:support@kuest.com')
-    expect(result.data?.supportWidgetScripts).toEqual([{
+    expect(result.data?.customJavascriptCodes).toEqual([{
       name: 'Crisp',
       snippet: '<script>window.$crisp = [];</script>',
       disabledOn: ['admin'],
@@ -93,7 +93,7 @@ describe('themeSettings social links', () => {
           value: 'support@kuest.com',
           updated_at: '2026-03-08T00:00:00.000Z',
         },
-        site_support_widget_scripts: {
+        site_custom_javascript_codes: {
           value: JSON.stringify([{
             name: 'Crisp',
             snippet: '<script>window.$crisp = [];</script>',
@@ -111,7 +111,7 @@ describe('themeSettings social links', () => {
     expect(state.linkedinLink).toBe('https://linkedin.com/company/kuest')
     expect(state.youtubeLink).toBe('https://youtube.com/@kuest')
     expect(state.supportUrl).toBe('mailto:support@kuest.com')
-    expect(state.supportWidgetScripts).toEqual([{
+    expect(state.customJavascriptCodes).toEqual([{
       name: 'Crisp',
       snippet: '<script>window.$crisp = [];</script>',
       disabledOn: ['portfolio'],
