@@ -1,7 +1,7 @@
 const SCRIPT_TAG_PATTERN = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi
 const SCRIPT_ATTRIBUTE_PATTERN = /([^\s=/>]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g
 const CUSTOM_JAVASCRIPT_CODE_TAG_PATTERN = /<script\b/i
-const CUSTOM_JAVASCRIPT_CODE_NON_SCRIPT_HTML_PATTERN = /<(?:\/?(?!script\b)[A-Z][\w:-]*|!--)/i
+const CUSTOM_JAVASCRIPT_CODE_NON_SCRIPT_HTML_PATTERN = /^(?:<!--|<\/?(?!script\b)[A-Z][\w:-]*(?=[\s/>]))/i
 export const MAX_CUSTOM_JAVASCRIPT_CODES = 12
 export const MAX_CUSTOM_JAVASCRIPT_CODE_NAME_LENGTH = 80
 export const MAX_CUSTOM_JAVASCRIPT_CODE_SNIPPET_LENGTH = 20_000

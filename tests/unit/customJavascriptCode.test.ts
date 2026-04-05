@@ -81,6 +81,25 @@ describe('custom javascript code helpers', () => {
     ])
   })
 
+  it('allows raw javascript snippets with identifier comparisons', () => {
+    const result = validateCustomJavascriptCodesJson(JSON.stringify([
+      {
+        name: 'Guard',
+        snippet: 'if (x<Y) { window.guard = true }',
+        disabledOn: [],
+      },
+    ]), 'Custom javascript code')
+
+    expect(result.error).toBeNull()
+    expect(result.value).toEqual([
+      {
+        name: 'Guard',
+        snippet: 'if (x<Y) { window.guard = true }',
+        disabledOn: [],
+      },
+    ])
+  })
+
   it('rejects markup that is not raw JavaScript or a script snippet', () => {
     const result = validateCustomJavascriptCodesJson(JSON.stringify([
       {
