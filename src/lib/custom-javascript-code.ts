@@ -376,7 +376,14 @@ function containsNonScriptHtml(snippet: string) {
       continue
     }
 
-    if (character === '/' || character === '.' || character === ']' || character === '}') {
+    if (character === '/') {
+      expectsExpression = true
+      pendingControlParenthesis = false
+      index += 1
+      continue
+    }
+
+    if (character === '.' || character === ']' || character === '}') {
       expectsExpression = false
       pendingControlParenthesis = false
       index += 1

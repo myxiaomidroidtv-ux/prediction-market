@@ -119,6 +119,25 @@ describe('custom javascript code helpers', () => {
     ])
   })
 
+  it('allows regex literals after division operators', () => {
+    const result = validateCustomJavascriptCodesJson(JSON.stringify([
+      {
+        name: 'Division regex',
+        snippet: 'const ratio = 1 / /<(div|span)>/i.test(tagName)',
+        disabledOn: [],
+      },
+    ]), 'Custom javascript code')
+
+    expect(result.error).toBeNull()
+    expect(result.value).toEqual([
+      {
+        name: 'Division regex',
+        snippet: 'const ratio = 1 / /<(div|span)>/i.test(tagName)',
+        disabledOn: [],
+      },
+    ])
+  })
+
   it('rejects markup that is not raw JavaScript or a script snippet', () => {
     const result = validateCustomJavascriptCodesJson(JSON.stringify([
       {
