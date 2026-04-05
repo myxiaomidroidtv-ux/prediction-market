@@ -1,6 +1,7 @@
 const SCRIPT_TAG_PATTERN = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi
 const SCRIPT_ATTRIBUTE_PATTERN = /([^\s=/>]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g
 const CUSTOM_JAVASCRIPT_CODE_TAG_PATTERN = /<script\b/i
+const CUSTOM_JAVASCRIPT_CODE_NON_SCRIPT_HTML_PATTERN = /<(?:\/?(?!script\b)[A-Z][\w:-]*|!--)/i
 export const MAX_CUSTOM_JAVASCRIPT_CODES = 12
 export const MAX_CUSTOM_JAVASCRIPT_CODE_NAME_LENGTH = 80
 export const MAX_CUSTOM_JAVASCRIPT_CODE_SNIPPET_LENGTH = 20_000
@@ -76,7 +77,7 @@ function validateCustomJavascriptCodeSnippet(value: unknown, sourceLabel: string
     }
   }
 
-  if (normalized.includes('<') && !CUSTOM_JAVASCRIPT_CODE_TAG_PATTERN.test(normalized)) {
+  if (CUSTOM_JAVASCRIPT_CODE_NON_SCRIPT_HTML_PATTERN.test(normalized) && !CUSTOM_JAVASCRIPT_CODE_TAG_PATTERN.test(normalized)) {
     return {
       value: null as string | null,
       error: `${sourceLabel} must be raw JavaScript or a provider <script> snippet.`,

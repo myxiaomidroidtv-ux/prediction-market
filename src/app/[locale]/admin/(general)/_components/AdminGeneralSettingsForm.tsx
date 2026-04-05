@@ -60,6 +60,21 @@ interface SettingsAccordionSectionProps {
   onToggle: (value: string) => void
 }
 
+interface CustomJavascriptCodeDraft extends CustomJavascriptCodeConfig {
+  id: string
+}
+
+function createCustomJavascriptCodeDraft(id: number, code: CustomJavascriptCodeConfig): CustomJavascriptCodeDraft {
+  return {
+    id: `custom-javascript-code-${id}`,
+    ...code,
+  }
+}
+
+function toCustomJavascriptCodeConfig({ id: _id, ...code }: CustomJavascriptCodeDraft): CustomJavascriptCodeConfig {
+  return code
+}
+
 function SettingsAccordionSection({
   value,
   header,
@@ -156,6 +171,7 @@ export default function AdminGeneralSettingsForm({
   const router = useRouter()
   const [state, formAction, isPending] = useActionState(updateGeneralSettingsAction, initialState)
   const wasPendingRef = useRef(isPending)
+  const nextCustomJavascriptCodeIdRef = useRef(0)
 
   const [siteName, setSiteName] = useState(initialSiteName)
   const [siteDescription, setSiteDescription] = useState(initialSiteDescription)
@@ -173,7 +189,9 @@ export default function AdminGeneralSettingsForm({
   const [linkedinLink, setLinkedinLink] = useState(initialLinkedinLink)
   const [youtubeLink, setYoutubeLink] = useState(initialYoutubeLink)
   const [supportUrl, setSupportUrl] = useState(initialSupportUrl)
-  const [customJavascriptCodes, setCustomJavascriptCodes] = useState<CustomJavascriptCodeConfig[]>(initialCustomJavascriptCodes)
+  const [customJavascriptCodes, setCustomJavascriptCodes] = useState<CustomJavascriptCodeDraft[]>(
+    () => initialCustomJavascriptCodes.map(code => createCustomJavascriptCodeDraft(nextCustomJavascriptCodeIdRef.current++, code)),
+  )
   const [feeRecipientWallet, setFeeRecipientWallet] = useState(initialFeeRecipientWallet)
   const [lifiIntegrator, setLifiIntegrator] = useState(initialLiFiIntegrator)
   const [lifiApiKey, setLifiApiKey] = useState(initialLiFiApiKey)
@@ -256,7 +274,9 @@ export default function AdminGeneralSettingsForm({
   }, [initialSupportUrl])
 
   useEffect(() => {
-    setCustomJavascriptCodes(initialCustomJavascriptCodes)
+    setCustomJavascriptCodes(
+      initialCustomJavascriptCodes.map(code => createCustomJavascriptCodeDraft(nextCustomJavascriptCodeIdRef.current++, code)),
+    )
   }, [initialCustomJavascriptCodes])
 
   useEffect(() => {
@@ -324,7 +344,7 @@ export default function AdminGeneralSettingsForm({
     return pwaIcon512PreviewUrl ?? initialPwaIcon512Url
   }, [initialPwaIcon512Url, pwaIcon512PreviewUrl])
   const serializedCustomJavascriptCodes = useMemo(
-    () => serializeCustomJavascriptCodes(customJavascriptCodes),
+    () => serializeCustomJavascriptCodes(customJavascriptCodes.map(toCustomJavascriptCodeConfig)),
     [customJavascriptCodes],
   )
   const customJavascriptCodeDisablePageOptions = useMemo(() => ([
@@ -364,7 +384,7 @@ export default function AdminGeneralSettingsForm({
 
   function updateCustomJavascriptCode(
     index: number,
-    updater: (code: CustomJavascriptCodeConfig) => CustomJavascriptCodeConfig,
+    updater: (code: CustomJavascriptCodeDraft) => CustomJavascriptCodeDraft,
   ) {
     setCustomJavascriptCodes(previous => previous.map((code, codeIndex) => (
       codeIndex === index ? updater(code) : code
@@ -374,11 +394,11 @@ export default function AdminGeneralSettingsForm({
   function handleAddCustomJavascriptCode() {
     setCustomJavascriptCodes(previous => [
       ...previous,
-      {
+      createCustomJavascriptCodeDraft(nextCustomJavascriptCodeIdRef.current++, {
         name: '',
         snippet: '',
         disabledOn: [],
-      },
+      }),
     ])
   }
 
@@ -1042,7 +1062,7 @@ export default function AdminGeneralSettingsForm({
                 {customJavascriptCodes.length > 0
                   ? customJavascriptCodes.map((code, index) => (
                       <div
-                        key={`custom-javascript-code-${index}`}
+                        key={code.id}
                         className="grid gap-4 rounded-xl border border-border/60 bg-muted/10 p-4"
                       >
                         <div className="flex items-start justify-between gap-3">
@@ -1062,9 +1082,9 @@ export default function AdminGeneralSettingsForm({
 
                         <div className="grid gap-4">
                           <div className="grid gap-2">
-                            <Label htmlFor={`theme-custom-javascript-code-name-${index}`}>{t('Name')}</Label>
+                            <Label htmlFor={`theme-custom-javascript-code-name-${code.id}`}>{t('Name')}</Label>
                             <Input
-                              id={`theme-custom-javascript-code-name-${index}`}
+                              id={`theme-custom-javascript-code-name-${code.id}`}
                               value={code.name}
                               onChange={event => updateCustomJavascriptCode(index, current => ({
                                 ...current,
@@ -1077,9 +1097,9 @@ export default function AdminGeneralSettingsForm({
                           </div>
 
                           <div className="grid gap-2">
-                            <Label htmlFor={`theme-custom-javascript-code-snippet-${index}`}>{t('Paste your JavaScript snippet here')}</Label>
+                            <Label htmlFor={`theme-custom-javascript-code-snippet-${code.id}`}>{t('Paste your JavaScript snippet here')}</Label>
                             <Textarea
-                              id={`theme-custom-javascript-code-snippet-${index}`}
+                              id={`theme-custom-javascript-code-snippet-${code.id}`}
                               value={code.snippet}
                               onChange={event => updateCustomJavascriptCode(index, current => ({
                                 ...current,
@@ -1098,7 +1118,7 @@ export default function AdminGeneralSettingsForm({
                           <Label>{t('Disable on')}</Label>
                           <div className="flex flex-wrap gap-3">
                             {customJavascriptCodeDisablePageOptions.map((option) => {
-                              const fieldId = `theme-custom-javascript-code-${index}-disable-${option.value}`
+                              const fieldId = `theme-custom-javascript-code-${code.id}-disable-${option.value}`
                               return (
                                 <label
                                   key={option.value}

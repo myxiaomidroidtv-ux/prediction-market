@@ -62,6 +62,25 @@ describe('custom javascript code helpers', () => {
     ])
   })
 
+  it('allows raw javascript snippets that include comparison operators', () => {
+    const result = validateCustomJavascriptCodesJson(JSON.stringify([
+      {
+        name: 'Counter',
+        snippet: 'if (count < 10) { window.count = count + 1 }',
+        disabledOn: [],
+      },
+    ]), 'Custom javascript code')
+
+    expect(result.error).toBeNull()
+    expect(result.value).toEqual([
+      {
+        name: 'Counter',
+        snippet: 'if (count < 10) { window.count = count + 1 }',
+        disabledOn: [],
+      },
+    ])
+  })
+
   it('rejects markup that is not raw JavaScript or a script snippet', () => {
     const result = validateCustomJavascriptCodesJson(JSON.stringify([
       {
