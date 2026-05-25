@@ -131,7 +131,7 @@ async function syncMarketVolumes(request: Request): Promise<VolumeSyncStats> {
     }
 
     try {
-      const responses = await fetchVolumeBatch(batch)
+      const responses = await fetchVolumeBatchWithFallback(batch)
       const responseMap = new Map<string, VolumeResponseItem>()
       for (const item of responses) {
         responseMap.set(item.condition_id, item)
@@ -424,6 +424,55 @@ async function fetchVolumeBatch(batch: VolumeWorkItem[]): Promise<VolumeResponse
   }
 
   return body as VolumeResponseItem[]
+}
+
+async function fetchVolumeBatchWithFallback(batch: VolumeWorkItem[]): Promise<VolumeResponseItem[]> {
+  try {
+    return await fetchVolumeBatch(batch)
+  }
+  catch (error: any) {
+    if (!isVolumeBatchTimeoutError(error)) {
+      throw error
+    }
+
+    const message = error?.message ?? 'volume_batch_failed'
+    if (batch.length <= 1) {
+      return batch.map(workItem => ({
+        condition_id: workItem.conditionId,
+        status: 599,
+        error: message,
+      }))
+    }
+
+    const midpoint = Math.ceil(batch.length / 2)
+    const [leftResponses, rightResponses] = await Promise.all([
+      fetchVolumeBatchWithFallback(batch.slice(0, midpoint)),
+      fetchVolumeBatchWithFallback(batch.slice(midpoint)),
+    ])
+
+    return [...leftResponses, ...rightResponses]
+  }
+}
+
+function isVolumeBatchTimeoutError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') {
+    return false
+  }
+
+  const candidate = error as { name?: unknown, message?: unknown, code?: unknown, cause?: unknown }
+  if (candidate.name === 'TimeoutError') {
+    return true
+  }
+
+  if (typeof candidate.code === 'string' && candidate.code.toLowerCase().includes('timeout')) {
+    return true
+  }
+
+  if (typeof candidate.message === 'string' && /\btimeout\b|timed out/i.test(candidate.message)) {
+    return true
+  }
+
+  return candidate.cause !== error && isVolumeBatchTimeoutError(candidate.cause)
 }
 
 async function updateMarketVolume(conditionId: string, totalVolume: string, volume24h: string) {
