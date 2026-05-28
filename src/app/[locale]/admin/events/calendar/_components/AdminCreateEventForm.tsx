@@ -59,7 +59,7 @@ import {
 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
-import { createPublicClient, formatUnits, getAddress, http, isAddress, keccak256, stringToHex, toHex } from 'viem'
+import { createPublicClient, formatUnits, getAddress, http, isAddress, keccak256, stringToHex } from 'viem'
 import { usePublicClient, useWalletClient } from 'wagmi'
 import AppLink from '@/components/AppLink'
 import EventIconImage from '@/components/EventIconImage'
@@ -152,6 +152,7 @@ import { CheckIndicator, OutcomeStateDot, SignatureTxIndicator } from './admin-c
 import {
   areCategoryItemsEqual,
   areOptionItemsEqual,
+  buildRpcTransactionRequest,
   buildStepErrors,
   createInitialForm,
   createOption,
@@ -3768,12 +3769,13 @@ function useAdminCreateEventForm({
               throw sendError
             }
 
-            const txRequest = {
+            const txRequest = buildRpcTransactionRequest({
               from: senderAddress,
               to: toAddress,
               data: tx.data as `0x${string}`,
-              value: toHex(BigInt(tx.value || '0')),
-            }
+              value: BigInt(tx.value || '0'),
+              ...(overrides ?? {}),
+            })
             const rpcHash = await runWithSignaturePrompt(
               () => activeWalletClient.request({
                 method: 'eth_sendTransaction',

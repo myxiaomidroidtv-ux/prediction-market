@@ -1,3 +1,4 @@
+import type { Hex } from 'viem'
 import type {
   AiRulesResponse,
   AiValidationIssue,
@@ -28,6 +29,7 @@ import type {
 import type { AdminSportsFormState, AdminSportsTeamHostStatus } from '@/lib/admin-sports-create'
 import type { EventCreationDraftRecord } from '@/lib/db/queries/event-creations'
 import type { EventCreationAssetRef, EventCreationRecurrenceUnit } from '@/lib/event-creation'
+import { toHex } from 'viem'
 import { buildAdminSportsStepErrors, isSportsMainCategory } from '@/lib/admin-sports-create'
 import { normalizeDateTimeLocalValue } from '@/lib/datetime-local'
 import { slugifyEventCreationValue as slugify } from '@/lib/event-creation'
@@ -716,7 +718,40 @@ export function isAlreadyInitializedError(message: string): boolean {
 }
 
 export function isBigIntSerializationError(message: string): boolean {
-  return /json\.stringify.*bigint|serialize bigint/i.test(message)
+  return /json\.stringify.*bigint|serialize.*bigint|failed to parse string to bigint|cannot convert .* to a bigint/i.test(message)
+}
+
+export function buildRpcTransactionRequest(params: {
+  from: `0x${string}`
+  to: `0x${string}`
+  data: `0x${string}`
+  value?: bigint
+  maxFeePerGas?: bigint
+  maxPriorityFeePerGas?: bigint
+}) {
+  const request: {
+    from: `0x${string}`
+    to: `0x${string}`
+    data: `0x${string}`
+    value: Hex
+    maxFeePerGas?: Hex
+    maxPriorityFeePerGas?: Hex
+  } = {
+    from: params.from,
+    to: params.to,
+    data: params.data,
+    value: toHex(params.value ?? 0n),
+  }
+
+  if (typeof params.maxFeePerGas === 'bigint') {
+    request.maxFeePerGas = toHex(params.maxFeePerGas)
+  }
+
+  if (typeof params.maxPriorityFeePerGas === 'bigint') {
+    request.maxPriorityFeePerGas = toHex(params.maxPriorityFeePerGas)
+  }
+
+  return request
 }
 
 export function mapSignatureFlowErrorForUser(message: string): string {
